@@ -1542,6 +1542,7 @@
       </div>
 
       <form class="join-form" onsubmit="handleJoinSubmit(event)">
+        <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
 
         <div class="form-row">
           <div class="form-field">
@@ -1659,6 +1660,7 @@
   <div class="container">
     <div style="padding: 80px 0; max-width: 720px; margin: 0 auto;">
       <form class="contact-form" onsubmit="handleContactSubmit(event)">
+        <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
         <div style="margin-bottom: 32px;">
           <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 30px; color: var(--navy); margin-bottom: 10px; font-weight: 600;">Send us a message</h3>
           <p style="color: var(--ink-soft); font-size: 16px; line-height: 1.6;">We'll route your message to the appropriate AWCIA contact and follow up directly.</p>
@@ -1764,22 +1766,43 @@
     btn.addEventListener('click', () => navigateTo(btn.dataset.page));
   });
 
-  // Form handlers (mock — no actual submission)
+  // Form handlers: POST to the /api/submit serverless function, which relays via SendGrid.
+  async function submitForm(form, formType, successId, sentLabel, resetLabel) {
+    const btn = form.querySelector('button[type=submit]');
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    btn.textContent = 'Sending...';
+
+    const data = Object.fromEntries(new FormData(form).entries());
+    data._form = formType;
+
+    try {
+      const res = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error('Request failed with status ' + res.status);
+      document.getElementById(successId).classList.add('show');
+      btn.textContent = sentLabel;
+      document.getElementById(successId).scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (err) {
+      console.error(err);
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.textContent = resetLabel;
+      alert('Sorry, something went wrong sending your message. Please try again, or email us directly.');
+    }
+  }
+
   function handleJoinSubmit(e) {
     e.preventDefault();
-    document.getElementById('form-success').classList.add('show');
-    e.target.querySelector('button[type=submit]').disabled = true;
-    e.target.querySelector('button[type=submit]').style.opacity = '0.5';
-    e.target.querySelector('button[type=submit]').textContent = 'Inquiry Received';
-    document.getElementById('form-success').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    submitForm(e.target, 'membership', 'form-success', 'Inquiry Received', 'Submit Membership Inquiry');
   }
 
   function handleContactSubmit(e) {
     e.preventDefault();
-    document.getElementById('contact-success').classList.add('show');
-    e.target.querySelector('button[type=submit]').disabled = true;
-    e.target.querySelector('button[type=submit]').style.opacity = '0.5';
-    e.target.querySelector('button[type=submit]').textContent = 'Message Sent';
+    submitForm(e.target, 'contact', 'contact-success', 'Message Sent', 'Send Message');
   }
 </script>
 
