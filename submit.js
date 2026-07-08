@@ -14,7 +14,7 @@ const TO_EMAIL = 'steve.a.root.ccm@gmail.com';
 // The "from" address. It must be on a domain you have verified in Resend.
 // For a quick test before verifying your own domain, you may use
 // 'AWCIA Website <onboarding@resend.dev>'.
-const FROM_EMAIL = 'AWCIA Website <notifications@awcia.com';
+const FROM_EMAIL = 'AWCIA Website <notifications@awcia.com>';
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
